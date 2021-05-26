@@ -1,0 +1,10 @@
+platform: iOS
+buildPlatform:
+displayName: "Export Build Artifacts"
+description: "Exports the specified build artifacts for download from the completed builds list"
+inputs:
+outputs:
+processFilename: ruby
+processArguments: '%AC_STEP_TEMP%/main.rb'
+files:
+- "main.rb"
