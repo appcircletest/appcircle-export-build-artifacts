@@ -14,8 +14,15 @@ urlChunk = URI(ENV["AC_UPLOADCHUNK_URL"])
 urlComplete = URI(ENV["AC_COMPLETEUPLOAD_URL"])
 chunkSize = 10000000
 
-filesList = Dir.glob(uploadDir+'/*').select { |e| File.file? e }
 puts "uploading files...";
+
+if File.file?(uploadDir)
+	puts "upload path is file."
+	filesList.push(uploadDir)
+else
+	puts "upload path is directory."
+	filesList = Dir.glob(uploadDir+'/*').select { |e| File.file? e }
+end
 
 chunkIndex = 0
 fileIndex = 0
@@ -27,10 +34,6 @@ queueId = ENV['AC_QUEUE_ID']==nil ? "00000000-0000-0000-0000-000000000000" : ENV
 logFile = ENV['AC_LOGFILE']
 if logFile != nil
 	filesList.push(logFile)
-end
-
-if ENV['AC_METADATA_OUTPUT_PATH'] != nil
-	filesList.push(ENV['AC_METADATA_OUTPUT_PATH'])
 end
 
 filesList.each do |f|
