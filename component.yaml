@@ -3,7 +3,12 @@ buildPlatform:
 displayName: "Export Build Artifacts"
 description: "Exports the specified build artifacts for download from the completed builds list"
 inputs:
-- AC_METADATA_OUTPUT_PATH: $AC_METADATA_OUTPUT_PATH
+- key: "AC_METADATA_OUTPUT_PATH"
+  defaultValue: "$AC_METADATA_OUTPUT_PATH"
+  isRequired: false
+  title: Metadata Directory
+  description: ""
+  helpText:
 outputs:
 processFilename: ruby
 processArguments: '%AC_STEP_TEMP%/main.rb'
