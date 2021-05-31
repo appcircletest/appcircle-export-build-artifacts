@@ -29,6 +29,10 @@ if logFile != nil
 	filesList.push(logFile)
 end
 
+if ENV['AC_METADATA_OUTPUT_PATH'] != nil
+	filesList.push(ENV['AC_METADATA_OUTPUT_PATH'])
+end
+
 filesList.each do |f|
 	puts "reading file: " + f
     
