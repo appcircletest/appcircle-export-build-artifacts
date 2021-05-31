@@ -18,6 +18,7 @@ puts "uploading files...";
 
 if File.file?(uploadDir)
 	puts "upload path is file."
+	filesList = []
 	filesList.push(uploadDir)
 else
 	puts "upload path is directory."
