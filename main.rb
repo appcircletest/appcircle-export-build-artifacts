@@ -9,7 +9,7 @@ puts ENV["AC_UPLOADCHUNK_URL"]
 puts ENV["AC_COMPLETEUPLOAD_URL"]
 puts "--------------------------------------"
 
-uploadDir = ENV["AC_OUTPUT_DIR"];
+uploadDir = ENV["AC_UPLOAD_DIR"];
 urlChunk = URI(ENV["AC_UPLOADCHUNK_URL"])
 urlComplete = URI(ENV["AC_COMPLETEUPLOAD_URL"])
 chunkSize = 10000000
