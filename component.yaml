@@ -1,7 +1,7 @@
 platform: iOS
 buildPlatform:
 displayName: "Export Build Artifacts"
-description: "Exports the specified build artifacts from the build agent to the artifacts section of the completed build."
+description: "Exports the specified build artifacts from the build agent to the Appcircle dashboard. The exported files will be available for download from the artifacts section of the completed build."
 inputs:
 - key: "AC_UPLOAD_DIR"
   defaultValue: "$AC_OUTPUT_DIR"
