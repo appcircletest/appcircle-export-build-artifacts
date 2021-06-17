@@ -1,6 +1,8 @@
 require "uri"
 require "json"
 require "net/http"
+require 'fileutils'
+require 'retriable'
 
 $stdout.sync = true
 
@@ -17,12 +19,19 @@ chunkSize = 10000000
 puts "uploading files...";
 
 if File.file?(uploadDir)
-	puts "upload path is file."
-	filesList = []
-	filesList.push(uploadDir)
+    puts "upload path is file."
+    filesList = []
+    filesList.push(uploadDir)
 else
-	puts "upload path is directory."
-	filesList = Dir.glob(uploadDir+'/*').select { |e| File.file? e }
+    puts "upload path is directory."
+    Dir.glob(uploadDir+'/*').each do |file|
+       if File.directory?(file)
+          puts "zipping directory: #{file}"
+          `zip -r "#{file}.zip" "#{file}"`
+       end
+    end
+
+    filesList = Dir.glob(uploadDir+'/*').select { |e| File.file? e }
 end
 
 chunkIndex = 0
@@ -38,47 +47,48 @@ if logFile != nil
 end
 
 filesList.each do |f|
-	puts "reading file: " + f
+    puts "reading file: " + f
     
     if f != logFile
-	    requestName = "artifact#{(fileIndex + 1)}"
-	    files.push({key: requestName, value: File.basename(f)})
+        requestName = "artifact#{(fileIndex + 1)}"
+        files.push({key: requestName, value: File.basename(f)})
     else
         requestName = "log"
-	    files.push({key: "log", value: "log.txt"})
+        files.push({key: "log", value: "log.txt"})
     end
 
-	offset = 0
+    offset = 0
 	
-	File.open(f, 'rb') do |file|	  
-	  while chunk = file.read(chunkSize)
-		File.open("ac_chunk_#{(fileIndex + 1)}", 'wb') do |fo|
-			fo.write(chunk)
-		end
-		
-		fileSize = File.size("ac_chunk_#{(fileIndex + 1)}")
-		
-        http = Net::HTTP.new(urlChunk.host, urlChunk.port)
-        http.use_ssl = true if urlChunk.instance_of? URI::HTTPS
-		request = Net::HTTP::Post.new(urlChunk)
-		request["Content-Type"] = "application/json"
-        form_data = [['agentId', agentId],
+    File.open(f, 'rb') do |file|	  
+        while chunk = file.read(chunkSize)
+            File.open("ac_chunk_#{(fileIndex + 1)}", 'wb') do |fo|
+                fo.write(chunk)
+            end
+               	
+            fileSize = File.size("ac_chunk_#{(fileIndex + 1)}")
+               	
+            http = Net::HTTP.new(urlChunk.host, urlChunk.port)
+            http.use_ssl = true if urlChunk.instance_of? URI::HTTPS
+            request = Net::HTTP::Post.new(urlChunk)
+            request["Content-Type"] = "application/json"
+            form_data = [['agentId', agentId],
                     ['queueId', queueId],
-					['fileSize', fileSize.to_s],
-					['name', requestName],
-					['filename', File.basename(f)],
-					['offset', offset.to_s],
-					['chunk', File.open("ac_chunk_#{(fileIndex + 1)}")]]
-		
-		request.set_form form_data, 'multipart/form-data'
-		response = http.request(request)
-		
-		puts "  uploading..."
-		
-        offset += fileSize
-		fileIndex += 1		
-	   end
-	end
+                    ['fileSize', fileSize.to_s],
+                    ['name', requestName],
+                    ['filename', File.basename(f)],
+                    ['offset', offset.to_s],
+                    ['chunk', File.open("ac_chunk_#{(fileIndex + 1)}")]]
+                    	
+            request.set_form form_data, 'multipart/form-data'
+            Retriable.retriable do
+                puts "  uploading... #{(fileIndex + 1)} #{requestName} #{offset.to_s} #{fileSize.to_s} "
+                response = http.request(request)
+            end
+                       	
+            offset += fileSize
+            fileIndex += 1		
+        end 
+    end
 end
 
 http = Net::HTTP.new(urlComplete.host, urlComplete.port)
@@ -88,6 +98,7 @@ request["Content-Type"] = "application/json"
 
 bodyJson = { agentId: agentId, queueId: queueId, isSuccess: isSuccess, files: files }.to_json
 request.body = bodyJson
-response = http.request(request)
-
-puts "Upload completed."
+Retriable.retriable do
+    puts "Upload completing..."
+    response = http.request(request)
+end
