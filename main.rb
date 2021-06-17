@@ -43,22 +43,23 @@ isSuccess = ENV['AC_IS_SUCCESS']==nil ? "true" : ENV['AC_IS_SUCCESS']
 queueId = ENV['AC_QUEUE_ID']==nil ? "00000000-0000-0000-0000-000000000000" : ENV['AC_QUEUE_ID']
 logFile = ENV['AC_LOGFILE']
 if logFile != nil
-	filesList.push(logFile)
+    logFileSnapshot = logFile + '.snapshot'
+    FileUtils.cp logFile, logFileSnapshot
+    filesList.push(logFileSnapshot)
 end
 
 filesList.each do |f|
     puts "reading file: " + f
     
-    if f != logFile
+    if f != logFileSnapshot
         requestName = "artifact#{(fileIndex + 1)}"
         files.push({key: requestName, value: File.basename(f)})
-    else
+    else        
         requestName = "log"
         files.push({key: "log", value: "log.txt"})
     end
 
-    offset = 0
-	
+    offset = 0	
     File.open(f, 'rb') do |file|	  
         while chunk = file.read(chunkSize)
             File.open("ac_chunk_#{(fileIndex + 1)}", 'wb') do |fo|
